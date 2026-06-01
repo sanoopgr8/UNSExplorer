@@ -39,7 +39,7 @@ export function BrokerDialog() {
     if (!showBrokerDialog) return
     if (editingProfile) {
       const p = profiles.find((p) => p.id === editingProfile)
-      if (p) setForm({ ...p })
+      if (p) setForm({ ...p, subscriptions: p.subscriptions ?? [] })
     } else {
       setForm({ ...DEFAULT, id: randomId(), clientId: randomClientId() })
     }
