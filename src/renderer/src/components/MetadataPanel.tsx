@@ -57,26 +57,26 @@ export function MetadataPanel() {
         {/* Topic info */}
         <Section title="Topic">
           <Row label="Path" value={topicPath ?? ''} mono />
-          {brokerProfile && <Row label="Broker" value={brokerProfile.name} />}
-          {node && <Row label="Msg Count" value={node.messageCount.toLocaleString()} />}
-          {node?.lastSeen && <Row label="Last Seen" value={formatRelative(node.lastSeen)} />}
-          {node?.lastSeen && <Row label="Timestamp" value={formatTimestamp(node.lastSeen)} />}
+          {brokerProfile ? <Row label="Broker" value={brokerProfile.name} /> : null}
+          {node ? <Row label="Msg Count" value={node.messageCount.toLocaleString()} /> : null}
+          {node?.lastSeen ? <Row label="Last Seen" value={formatRelative(node.lastSeen)} /> : null}
+          {node?.lastSeen ? <Row label="Timestamp" value={formatTimestamp(node.lastSeen)} /> : null}
         </Section>
 
         {/* Latest payload metadata */}
-        {latestMsg && decoded && (
+        {latestMsg != null && decoded != null ? (
           <Section title="Latest Payload">
             <Row label="Type" value={decoded.type.toUpperCase()} />
             <Row label="Size" value={`${latestMsg.payload.length} bytes`} />
             <Row label="QoS" value={`${latestMsg.qos}`} />
             <Row label="Retain" value={latestMsg.retain ? 'Yes' : 'No'} />
           </Section>
-        )}
+        ) : null}
 
         {/* JSON fields */}
-        {decoded?.type === 'json' && decoded.parsed && typeof decoded.parsed === 'object' && (
+        {decoded?.type === 'json' && decoded.parsed != null && typeof decoded.parsed === 'object' ? (
           <Section title="JSON Fields">
-            {Object.entries(decoded.parsed as Record<string, unknown>)
+            {(Object.entries(decoded.parsed as Record<string, unknown>)
               .slice(0, 20)
               .map(([k, v]) => (
                 <Row
@@ -85,18 +85,18 @@ export function MetadataPanel() {
                   value={typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')}
                   mono
                 />
-              ))}
+              )) as React.ReactNode)}
           </Section>
-        )}
+        ) : null}
 
         {/* Broker connection */}
-        {brokerState && (
+        {brokerState != null ? (
           <Section title="Broker">
             <Row label="Status" value={brokerState.status} valueClass="text-green-400" />
-            {brokerState.latency > 0 && <Row label="Latency" value={`${brokerState.latency} ms`} />}
+            {brokerState.latency > 0 ? <Row label="Latency" value={`${brokerState.latency} ms`} /> : null}
             <Row label="Total Msgs" value={brokerState.messageCount.toLocaleString()} />
           </Section>
-        )}
+        ) : null}
       </div>
     </div>
   )

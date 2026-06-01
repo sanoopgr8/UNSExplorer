@@ -75,7 +75,7 @@ class MqttManager {
                 clientId: profile.clientId || `uns-explorer-${Date.now()}`,
                 username: profile.username || undefined,
                 password: profile.password || undefined,
-                keepalive: profile.keepalive ?? 60,
+                keepalive: profile.keepalive ?? 30, // 30s — well within broker limits
                 connectTimeout: profile.connectTimeout ?? 8000,
                 reconnectPeriod: 0, // we manage reconnect ourselves
                 clean: true,
@@ -104,16 +104,22 @@ class MqttManager {
                     latency: 0,
                 };
                 this.connections.set(profile.id, conn);
+                this._subscribe(conn, emit);
                 emit('broker:connected', { brokerId: profile.id });
                 resolve({ ok: true });
-                this._subscribe(conn, emit);
+                // Use a safe non-$ topic for latency measurement.
+                // MQTT keepalive (PINGREQ/PINGRESP) already keeps the connection alive —
+                // we just need a lightweight publish to measure round-trip time.
                 conn.pingTimer = setInterval(() => {
                     const start = Date.now();
-                    client.publish(`$uns-explorer/ping/${profile.id}`, '', { qos: 0 }, () => {
-                        conn.latency = Date.now() - start;
-                        emit('broker:latency', { brokerId: profile.id, latency: conn.latency });
+                    const pingTopic = `uns-explorer/ping/${profile.clientId}`;
+                    client.publish(pingTopic, '', { qos: 0 }, (err) => {
+                        if (!err) {
+                            conn.latency = Date.now() - start;
+                            emit('broker:latency', { brokerId: profile.id, latency: conn.latency });
+                        }
                     });
-                }, 15000);
+                }, 30000);
             });
             client.on('message', (topic, payload, packet) => {
                 const conn = this.connections.get(profile.id);
@@ -140,7 +146,7 @@ class MqttManager {
             });
             client.on('close', () => {
                 const conn = this.connections.get(profile.id);
-                console.log(`[MQTT] Connection closed for ${profile.id}`);
+                console.log(`[MQTT] Connection closed for ${profile.id} — will reconnect in ${RECONNECT_DELAY_MS / 1000}s`);
                 emit('broker:disconnected', { brokerId: profile.id });
                 // Schedule reconnect if we still have this connection tracked
                 if (conn) {
@@ -221,16 +227,28 @@ class MqttManager {
         this.connections.delete(brokerId);
         await new Promise((resolve) => conn.client.end(true, {}, () => resolve()));
     }
-    async publish(brokerId, topic, payload, qos = 0, retain = false) {
+    async publish(brokerId, topic, payload, qos = 0, retain = false, emit) {
         const conn = this.connections.get(brokerId);
         if (!conn)
             return { ok: false, error: 'Not connected' };
         return new Promise((resolve) => {
             conn.client.publish(topic, payload, { qos, retain }, (err) => {
-                if (err)
+                if (err) {
                     resolve({ ok: false, error: err.message });
-                else
+                }
+                else {
+                    // Echo the published message to the renderer so it always appears
+                    // in the topic tree even if the broker doesn't route it back
+                    emit?.('mqtt:message', {
+                        brokerId,
+                        topic,
+                        payload,
+                        qos,
+                        retain,
+                        timestamp: Date.now(),
+                    });
                     resolve({ ok: true });
+                }
             });
         });
     }

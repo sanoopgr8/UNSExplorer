@@ -78,7 +78,7 @@ function BrokerRow({ profile }: { profile: BrokerProfile }) {
     }
   }
 
-  const subs = profile.subscriptions ?? []
+  const subs = profile.subscriptions ?? []   // guard for profiles saved before subscriptions field
 
   return (
     <div className="mx-1 my-0.5 rounded-lg overflow-hidden">

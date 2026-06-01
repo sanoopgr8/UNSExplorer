@@ -61,7 +61,9 @@ ipcMain.handle('mqtt:disconnect', async (_e, brokerId) => {
 })
 
 ipcMain.handle('mqtt:publish', async (_e, { brokerId, topic, payload, qos, retain }) => {
-  return mqttManager.publish(brokerId, topic, payload, qos, retain)
+  return mqttManager.publish(brokerId, topic, payload, qos, retain, (event, data) => {
+    mainWindow?.webContents.send(event, data)
+  })
 })
 
 ipcMain.handle('mqtt:subscribe', async (_e, { brokerId, add, remove }) => {
