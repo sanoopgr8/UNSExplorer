@@ -3,6 +3,7 @@ import { useTopicStore } from '../store/topicStore'
 import { useBrokerStore } from '../store/brokerStore'
 import type { TopicNode } from '../types'
 import { formatRelative } from '../lib/payload'
+import { MiniSparkline } from './Sparkline'
 
 interface NodeProps {
   node: TopicNode
@@ -11,7 +12,7 @@ interface NodeProps {
 }
 
 function TreeNode({ node, depth, brokerColor }: NodeProps) {
-  const { selectedTopic, expandedPaths, pinnedTopics, selectTopic, toggleExpand, togglePin } =
+  const { selectedTopic, expandedPaths, pinnedTopics, selectTopic, toggleExpand, togglePin, getHistory } =
     useTopicStore()
 
   const childList = Array.from(node.children.values()).sort((a, b) =>
@@ -63,6 +64,16 @@ function TreeNode({ node, depth, brokerColor }: NodeProps) {
           <span className={`text-xs ${levelColor} opacity-50 group-hover:opacity-100 flex-shrink-0`}>
             {levelLabel}
           </span>
+        )}
+
+        {/* Mini sparkline for leaf nodes */}
+        {node.isLeaf && (
+          <MiniSparkline
+            history={getHistory(node.fullPath)}
+            width={48}
+            height={16}
+            color={brokerColor}
+          />
         )}
 
         {/* Message count badge */}

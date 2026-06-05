@@ -281,7 +281,7 @@ Renderer Process (React + TypeScript)
 ### Phase 2 — Advanced (planned)
 - [ ] Sparkplug B Protobuf decoder (NBIRTH / DBIRTH / NDATA / DDATA)
 - [ ] Schema compliance auditing against ISA-95 and JSON Schema
-- [ ] Historical sparklines per topic
+- [x] Historical sparklines per topic
 - [ ] Stale data / TTL tracking with configurable thresholds
 - [ ] Audit log export (CSV / JSON)
 
