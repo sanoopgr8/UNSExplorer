@@ -27,7 +27,7 @@ export declare class MqttManager {
         error?: string;
     }>;
     disconnect(brokerId: string): Promise<void>;
-    publish(brokerId: string, topic: string, payload: string, qos?: 0 | 1 | 2, retain?: boolean): Promise<{
+    publish(brokerId: string, topic: string, payload: string, qos?: 0 | 1 | 2, retain?: boolean, emit?: EventEmitter): Promise<{
         ok: boolean;
         error?: string;
     }>;
