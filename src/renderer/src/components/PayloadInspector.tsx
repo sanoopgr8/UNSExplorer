@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTopicStore } from '../store/topicStore'
 import { useBrokerStore } from '../store/brokerStore'
 import { decodePayload, formatTimestamp } from '../lib/payload'
+import { SparklineTab } from './Sparkline'
 import type { MqttMessage } from '../types'
 
 function JsonHighlight({ json }: { json: string }) {
@@ -65,7 +66,7 @@ function MessageRow({ msg, selected, onClick }: { msg: MqttMessage; selected: bo
 export function PayloadInspector() {
   const { selectedTopic, getHistory } = useTopicStore()
   const { profiles } = useBrokerStore()
-  const [activeTab, setActiveTab] = useState<'payload' | 'history'>('payload')
+  const [activeTab, setActiveTab] = useState<'payload' | 'history' | 'sparkline'>('payload')
   const [selectedMsgIdx, setSelectedMsgIdx] = useState(0)
   const [copied, setCopied] = useState(false)
   const [rawView, setRawView] = useState(false)
@@ -127,7 +128,7 @@ export function PayloadInspector() {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-800">
-        {(['payload', 'history'] as const).map((tab) => (
+        {(['payload', 'history', 'sparkline'] as const).map((tab) => (
           <button
             key={tab}
             className={`px-4 py-2 text-xs font-medium capitalize transition-colors ${
@@ -137,7 +138,7 @@ export function PayloadInspector() {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {tab === 'sparkline' ? '📈' : tab}
             {tab === 'history' && history.length > 0 && (
               <span className="ml-1 bg-gray-700 text-gray-400 text-xs px-1 rounded">{history.length}</span>
             )}
@@ -162,6 +163,10 @@ export function PayloadInspector() {
       {history.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-gray-600">No messages received yet.</p>
+        </div>
+      ) : activeTab === 'sparkline' ? (
+        <div className="flex-1 overflow-hidden">
+          <SparklineTab history={history} />
         </div>
       ) : activeTab === 'payload' ? (
         <div className="flex-1 overflow-auto p-4">
